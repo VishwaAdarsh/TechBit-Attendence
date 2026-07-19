@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = 'https://techbit-attendence.onrender.com';
 const API_BASE_URL = `${API_URL}/api`;
 
 const getAuthHeaders = () => {
@@ -99,7 +99,7 @@ export const api = {
 
   // Admin: Members Management
   getMembers: async (searchQuery = '') => {
-    const url = searchQuery 
+    const url = searchQuery
       ? `${API_BASE_URL}/admin/members?q=${encodeURIComponent(searchQuery)}`
       : `${API_BASE_URL}/admin/members`;
     const res = await fetch(url, {
