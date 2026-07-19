@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 async function runTests() {
   console.log('--- STARTING TECHBIT 7.0 BACKEND INTEGRATION TESTS ---');
@@ -178,7 +178,7 @@ async function runTests() {
     });
     const membersData = await membersRes.json();
     const testMemberUser = membersData.find(m => m.member_id === memberId);
-    
+
     if (!testMemberUser) {
       throw new Error('Test member not found in list');
     }
@@ -222,7 +222,7 @@ async function runTests() {
     });
     const updateAttendanceData = await updateAttendanceRes.json();
     console.log('Response Status:', updateAttendanceRes.status);
-    
+
     // Check in database if there's only 1 record
     const checkAttendanceRes = await fetch(`${API_URL}/admin/meetings/${meetingId}/attendance`, {
       method: 'GET',
@@ -231,7 +231,7 @@ async function runTests() {
     const checkAttendanceData = await checkAttendanceRes.json();
     console.log('Response Data:', checkAttendanceData);
     const testMemberRecord = checkAttendanceData.members.find(m => m.user_id === testMemberUser.id);
-    
+
     if (updateAttendanceRes.status === 200 && testMemberRecord && testMemberRecord.status === 'LATE') {
       console.log('PASS: Attendance updated successfully to LATE and no duplicate record was created.');
     } else {
