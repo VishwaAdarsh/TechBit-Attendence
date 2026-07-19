@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Users, Calendar, CheckSquare, TrendingUp, LogOut, Lock, User, Plus, 
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, HashRouter } from 'react-router-dom';
+import {
+  Users, Calendar, CheckSquare, TrendingUp, LogOut, Lock, User, Plus,
   Search, Edit2, ShieldAlert, Check, X, Clock, AlertCircle, RefreshCw, ChevronRight, Activity, CircleAlert
 } from 'lucide-react';
 import { api } from './services/api';
@@ -85,22 +85,20 @@ const Login = () => {
           <button
             type="button"
             onClick={() => { setRoleMode('MEMBER'); setError(''); }}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 ${
-              roleMode === 'MEMBER'
-                ? 'bg-gradient-to-r from-gameCyan to-gameElectric text-gameDark shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 ${roleMode === 'MEMBER'
+              ? 'bg-gradient-to-r from-gameCyan to-gameElectric text-gameDark shadow-md'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             MEMBER
           </button>
           <button
             type="button"
             onClick={() => { setRoleMode('IT_HEAD'); setError(''); }}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 ${
-              roleMode === 'IT_HEAD'
-                ? 'bg-gradient-to-r from-gamePurple to-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 ${roleMode === 'IT_HEAD'
+              ? 'bg-gradient-to-r from-gamePurple to-indigo-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             IT HEAD / ADMIN
           </button>
@@ -176,11 +174,10 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3.5 rounded-xl font-bold tracking-widest text-sm transition-all duration-300 uppercase ${
-              roleMode === 'IT_HEAD' 
-                ? 'btn-cyber-purple' 
-                : 'btn-cyber-cyan'
-            }`}
+            className={`w-full py-3.5 rounded-xl font-bold tracking-widest text-sm transition-all duration-300 uppercase ${roleMode === 'IT_HEAD'
+              ? 'btn-cyber-purple'
+              : 'btn-cyber-cyan'
+              }`}
           >
             {loading ? 'Authenticating...' : 'Access Dashboard'}
           </button>
@@ -251,31 +248,29 @@ const Register = () => {
         <div className="flex bg-gameBlue/50 p-1.5 rounded-xl mb-6 border border-white/5">
           <button
             type="button"
-            onClick={() => { 
-              setRoleMode('MEMBER'); 
-              setError(''); 
-              setFormData({ ...formData, role: 'MEMBER', accessCode: '' }); 
+            onClick={() => {
+              setRoleMode('MEMBER');
+              setError('');
+              setFormData({ ...formData, role: 'MEMBER', accessCode: '' });
             }}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 ${
-              roleMode === 'MEMBER'
-                ? 'bg-gradient-to-r from-gameCyan to-gameElectric text-gameDark shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 ${roleMode === 'MEMBER'
+              ? 'bg-gradient-to-r from-gameCyan to-gameElectric text-gameDark shadow-md'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             MEMBER SIGNUP
           </button>
           <button
             type="button"
-            onClick={() => { 
-              setRoleMode('IT_HEAD'); 
-              setError(''); 
-              setFormData({ ...formData, role: 'ADMIN' }); 
+            onClick={() => {
+              setRoleMode('IT_HEAD');
+              setError('');
+              setFormData({ ...formData, role: 'ADMIN' });
             }}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 ${
-              roleMode === 'IT_HEAD'
-                ? 'bg-gradient-to-r from-gamePurple to-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 ${roleMode === 'IT_HEAD'
+              ? 'bg-gradient-to-r from-gamePurple to-indigo-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             IT HEAD SIGNUP
           </button>
@@ -399,11 +394,10 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3.5 rounded-xl font-bold tracking-widest text-sm transition-all duration-300 uppercase ${
-                roleMode === 'IT_HEAD' 
-                  ? 'btn-cyber-purple' 
-                  : 'btn-cyber-cyan'
-              }`}
+              className={`w-full py-3.5 rounded-xl font-bold tracking-widest text-sm transition-all duration-300 uppercase ${roleMode === 'IT_HEAD'
+                ? 'btn-cyber-purple'
+                : 'btn-cyber-cyan'
+                }`}
             >
               {loading ? 'Registering...' : 'Complete Registration'}
             </button>
@@ -600,12 +594,11 @@ const MemberDashboard = () => {
                       <td className="px-6 py-4 text-slate-400">{record.date}</td>
                       <td className="px-6 py-4 text-slate-400">{record.time}</td>
                       <td className="px-6 py-4 text-right">
-                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
-                          record.status === 'PRESENT' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${record.status === 'PRESENT' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                           record.status === 'LATE' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
-                          record.status === 'ABSENT' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                          'bg-slate-500/10 text-slate-400 border border-slate-500/20'
-                        }`}>
+                            record.status === 'ABSENT' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                              'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                          }`}>
                           {record.status === 'PRESENT' && <Check className="w-3.5 h-3.5" />}
                           {record.status === 'LATE' && <Clock className="w-3.5 h-3.5" />}
                           {record.status === 'ABSENT' && <X className="w-3.5 h-3.5" />}
@@ -631,7 +624,7 @@ const MemberDashboard = () => {
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'members', 'meetings', 'attendance_mark'
-  
+
   // States
   const [summary, setSummary] = useState(null);
   const [members, setMembers] = useState([]);
@@ -761,7 +754,7 @@ const AdminDashboard = () => {
       setLoading(true);
       setSelectedMeeting(meeting);
       const data = await api.getMeetingAttendance(meeting.id);
-      
+
       // Map members list. If status is null or undefined, default to 'PRESENT' to make marking quick
       const mapped = data.members.map(m => ({
         ...m,
@@ -848,11 +841,10 @@ const AdminDashboard = () => {
         <div className="flex-1 px-4 py-6 space-y-2">
           <button
             onClick={() => { setActiveTab('overview'); setSelectedMeeting(null); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'overview'
-                ? 'bg-gradient-to-r from-gameCyan/20 to-gameCyan/5 border-l-4 border-gameCyan text-gameCyan'
-                : 'text-slate-400 hover:bg-white/[2%] hover:text-slate-200'
-            }`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${activeTab === 'overview'
+              ? 'bg-gradient-to-r from-gameCyan/20 to-gameCyan/5 border-l-4 border-gameCyan text-gameCyan'
+              : 'text-slate-400 hover:bg-white/[2%] hover:text-slate-200'
+              }`}
           >
             <Activity className="w-5 h-5" />
             Overview Dashboard
@@ -860,11 +852,10 @@ const AdminDashboard = () => {
 
           <button
             onClick={() => { setActiveTab('members'); setSelectedMeeting(null); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'members'
-                ? 'bg-gradient-to-r from-gameCyan/20 to-gameCyan/5 border-l-4 border-gameCyan text-gameCyan'
-                : 'text-slate-400 hover:bg-white/[2%] hover:text-slate-200'
-            }`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${activeTab === 'members'
+              ? 'bg-gradient-to-r from-gameCyan/20 to-gameCyan/5 border-l-4 border-gameCyan text-gameCyan'
+              : 'text-slate-400 hover:bg-white/[2%] hover:text-slate-200'
+              }`}
           >
             <Users className="w-5 h-5" />
             Committee Members
@@ -872,11 +863,10 @@ const AdminDashboard = () => {
 
           <button
             onClick={() => { setActiveTab('meetings'); setSelectedMeeting(null); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'meetings' || activeTab === 'attendance_mark'
-                ? 'bg-gradient-to-r from-gameCyan/20 to-gameCyan/5 border-l-4 border-gameCyan text-gameCyan'
-                : 'text-slate-400 hover:bg-white/[2%] hover:text-slate-200'
-            }`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${activeTab === 'meetings' || activeTab === 'attendance_mark'
+              ? 'bg-gradient-to-r from-gameCyan/20 to-gameCyan/5 border-l-4 border-gameCyan text-gameCyan'
+              : 'text-slate-400 hover:bg-white/[2%] hover:text-slate-200'
+              }`}
           >
             <Calendar className="w-5 h-5" />
             Meeting History
@@ -980,16 +970,16 @@ const AdminDashboard = () => {
                     <div>
                       <h4 className="text-base font-bold text-slate-200">{summary.latestMeeting.title}</h4>
                       <p className="text-xs text-slate-500 mt-1">Convened on {summary.latestMeeting.date}</p>
-                      
+
                       <div className="space-y-3.5 mt-6">
                         {Object.entries(summary.latestMeeting.stats).map(([key, val]) => {
                           const maxVal = Math.max(...Object.values(summary.latestMeeting.stats), 1);
                           const pct = (val / maxVal) * 100;
                           const label = key.toUpperCase();
-                          const colorClass = 
+                          const colorClass =
                             label === 'PRESENT' ? 'bg-emerald-500' :
-                            label === 'LATE' ? 'bg-orange-500' :
-                            label === 'ABSENT' ? 'bg-red-500' : 'bg-slate-500';
+                              label === 'LATE' ? 'bg-orange-500' :
+                                label === 'ABSENT' ? 'bg-red-500' : 'bg-slate-500';
                           return (
                             <div key={key}>
                               <div className="flex justify-between text-xs font-semibold mb-1 text-slate-300">
@@ -1008,8 +998,8 @@ const AdminDashboard = () => {
                       <TrendingUp className="w-10 h-10 text-gameCyan mb-2" />
                       <p className="text-sm font-semibold text-slate-300">Track All Events Attendance</p>
                       <p className="text-xs text-slate-500 mt-1 mb-4">You can easily update status, add new meetings, or edit prior attendance records.</p>
-                      <button 
-                        onClick={() => setActiveTab('meetings')} 
+                      <button
+                        onClick={() => setActiveTab('meetings')}
                         className="btn-outline-cyber text-xs flex items-center gap-1.5"
                       >
                         Manage Meetings <ChevronRight className="w-4 h-4" />
@@ -1020,7 +1010,7 @@ const AdminDashboard = () => {
                   <div className="py-12 text-center text-slate-500">
                     <Calendar className="w-12 h-12 text-slate-700 mx-auto mb-2" />
                     <p className="text-sm">No meetings recorded in the system.</p>
-                    <button 
+                    <button
                       onClick={() => setShowCreateMeeting(true)}
                       className="btn-cyber-cyan text-xs mt-3 flex items-center gap-1.5 mx-auto"
                     >
@@ -1055,8 +1045,8 @@ const AdminDashboard = () => {
                   </button>
                 </form>
                 {searchQuery && (
-                  <button 
-                    onClick={() => { setSearchQuery(''); fetchMembers(''); }} 
+                  <button
+                    onClick={() => { setSearchQuery(''); fetchMembers(''); }}
                     className="bg-white/5 border border-white/10 text-slate-400 hover:text-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold"
                   >
                     Clear Filter
@@ -1099,11 +1089,10 @@ const AdminDashboard = () => {
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                                member.status === 'ACTIVE'
-                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                  : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                              }`}>
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${member.status === 'ACTIVE'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                }`}>
                                 <span className={`w-1.5 h-1.5 rounded-full ${member.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
                                 {member.status}
                               </span>
@@ -1119,11 +1108,10 @@ const AdminDashboard = () => {
                                 </button>
                                 <button
                                   onClick={() => handleToggleStatus(member.id, member.status)}
-                                  className={`p-2 rounded-lg text-xs font-bold transition-all uppercase ${
-                                    member.status === 'ACTIVE'
-                                      ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
-                                      : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
-                                  }`}
+                                  className={`p-2 rounded-lg text-xs font-bold transition-all uppercase ${member.status === 'ACTIVE'
+                                    ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
+                                    : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
+                                    }`}
                                 >
                                   {member.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                                 </button>
@@ -1163,8 +1151,8 @@ const AdminDashboard = () => {
                   </div>
                 ) : (
                   meetings.map((meeting) => (
-                    <div 
-                      key={meeting.id} 
+                    <div
+                      key={meeting.id}
                       className="glass-panel hover:border-gameCyan/20 transition-all rounded-2xl p-6 flex flex-col justify-between group cursor-pointer hover:shadow-xl"
                       onClick={() => openAttendanceMarker(meeting)}
                     >
@@ -1199,7 +1187,7 @@ const AdminDashboard = () => {
                           </p>
                         )}
                       </div>
-                      
+
                       <div className="border-t border-white/5 mt-5 pt-4 flex items-center justify-between text-xs">
                         <span className="text-slate-500">Organized by {meeting.creator_name}</span>
                         <span className="text-gameCyan font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1219,8 +1207,8 @@ const AdminDashboard = () => {
               {/* Back Header & Info */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 glass-panel rounded-2xl">
                 <div>
-                  <button 
-                    onClick={() => { setActiveTab('meetings'); setSelectedMeeting(null); }} 
+                  <button
+                    onClick={() => { setActiveTab('meetings'); setSelectedMeeting(null); }}
                     className="text-xs font-bold text-gameCyan hover:underline mb-2 block flex items-center gap-1"
                   >
                     ← Back to Meetings
@@ -1231,7 +1219,7 @@ const AdminDashboard = () => {
                     <span><strong>Time:</strong> {selectedMeeting.time}</span>
                   </p>
                 </div>
-                
+
                 {/* Bulk Actions */}
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -1564,23 +1552,23 @@ const MainApp = () => {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      
-      <Route 
-        path="/admin" 
+
+      <Route
+        path="/admin"
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <AdminDashboard />
           </ProtectedRoute>
-        } 
+        }
       />
-      
-      <Route 
-        path="/dashboard" 
+
+      <Route
+        path="/dashboard"
         element={
           <ProtectedRoute allowedRoles={['MEMBER']}>
             <MemberDashboard />
           </ProtectedRoute>
-        } 
+        }
       />
 
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -1590,9 +1578,9 @@ const MainApp = () => {
 
 const App = () => {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <MainApp />
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 
