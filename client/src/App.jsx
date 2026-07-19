@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation, HashRouter } from 'react-router-dom';
+import { Browserrouter, Routes, Route, Navigate, useNavigate, useLocation, HashRouter } from 'react-router-dom';
 import {
   Users, Calendar, CheckSquare, TrendingUp, LogOut, Lock, User, Plus,
   Search, Edit2, ShieldAlert, Check, X, Clock, AlertCircle, RefreshCw, ChevronRight, Activity, CircleAlert
@@ -1578,9 +1578,9 @@ const MainApp = () => {
 
 const App = () => {
   return (
-    <HashRouter>
+    <Browserrouter>
       <MainApp />
-    </HashRouter>
+    </Browserrouter>
   );
 };
 
