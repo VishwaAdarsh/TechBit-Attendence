@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-gameDark: #05070F;
+  --color-gameNavy: #0B132B;
+  --color-gameBlue: #1C2541;
+  --color-gameElectric: #3A506B;
+  --color-gameCyan: #00F0FF;
+  --color-gamePurple: #8A2BE2;
+  --color-gameAccent: #5BC0BE;
+  
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-gameDark);
+    color: #f1f5f9;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(138, 43, 226, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.03) 0px, transparent 50%);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gameDark;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gameBlue/50 rounded-full hover:bg-gameAccent/50 transition-colors;
+}
+
+/* Glassmorphism card utility */
+.glass-panel {
+  @apply bg-gameNavy/40 backdrop-blur-md border border-white/5 shadow-2xl;
+}
+
+.glass-panel-glow {
+  @apply bg-gameNavy/50 backdrop-blur-lg border border-gameCyan/20 shadow-[0_0_15px_rgba(0,240,255,0.05)];
+}
+
+/* Glowing text */
+.glow-text {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.glow-text-purple {
+  text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+}
+
+/* Dynamic glow button */
+.btn-cyber-cyan {
+  @apply bg-gameCyan text-gameDark font-semibold px-4 py-2 rounded-lg hover:shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all duration-300 active:scale-95;
+}
+
+.btn-cyber-purple {
+  @apply bg-gamePurple text-white font-semibold px-4 py-2 rounded-lg hover:shadow-[0_0_15px_rgba(138,43,226,0.4)] transition-all duration-300 active:scale-95;
+}
+
+.btn-outline-cyber {
+  @apply border border-gameCyan/30 text-gameCyan bg-transparent font-semibold px-4 py-2 rounded-lg hover:bg-gameCyan/10 hover:border-gameCyan transition-all duration-300 active:scale-95;
+}
