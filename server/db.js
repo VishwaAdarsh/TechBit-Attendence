@@ -1,87 +1,67 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
-const dbPath = path.join(__dirname, 'attendance.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Error opening database:', err.message);
-  } else {
-    console.log('Connected to the SQLite database at:', dbPath);
-    // Enable foreign key constraints
-    db.run('PRAGMA foreign_keys = ON;', (err) => {
-      if (err) console.error('Error enabling foreign keys:', err);
-    });
-  }
+const connectionString = process.env.DATABASE_URL;
+
+const pool = new Pool({
+  connectionString: connectionString || 'postgresql://postgres:postgres@localhost:5432/techbit_attendance',
+  ssl: connectionString ? { rejectUnauthorized: false } : false
 });
 
-// Helper functions to use promises with sqlite3 callbacks
-const dbRun = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ id: this.lastID, changes: this.changes });
-      }
-    });
-  });
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle PostgreSQL client:', err);
+});
+
+// Helper functions for PostgreSQL queries
+const dbGet = async (sql, params = []) => {
+  const res = await pool.query(sql, params);
+  return res.rows[0] || null;
 };
 
-const dbGet = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(row);
-      }
-    });
-  });
+const dbAll = async (sql, params = []) => {
+  const res = await pool.query(sql, params);
+  return res.rows;
 };
 
-const dbAll = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows);
-      }
-    });
-  });
+const dbRun = async (sql, params = []) => {
+  const res = await pool.query(sql, params);
+  return {
+    id: res.rows && res.rows[0] && res.rows[0].id !== undefined ? res.rows[0].id : null,
+    changes: res.rowCount,
+    rowCount: res.rowCount
+  };
 };
 
-// Initialize and seed tables
+// Initialize and seed PostgreSQL tables
 const initializeDb = async () => {
   try {
     // USERS Table
     await dbRun(`
       CREATE TABLE IF NOT EXISTS USERS (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        member_id TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        member_id VARCHAR(255) UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
-        role TEXT CHECK(role IN ('ADMIN', 'MEMBER')) NOT NULL DEFAULT 'MEMBER',
-        status TEXT CHECK(status IN ('ACTIVE', 'DEACTIVATED')) NOT NULL DEFAULT 'ACTIVE',
-        class_year TEXT NOT NULL,
-        committee_role TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        role VARCHAR(20) CHECK(role IN ('ADMIN', 'MEMBER')) NOT NULL DEFAULT 'MEMBER',
+        status VARCHAR(20) CHECK(status IN ('ACTIVE', 'DEACTIVATED')) NOT NULL DEFAULT 'ACTIVE',
+        class_year VARCHAR(100) NOT NULL,
+        committee_role VARCHAR(100) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // MEETINGS Table
     await dbRun(`
       CREATE TABLE IF NOT EXISTS MEETINGS (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        date TEXT NOT NULL,
-        time TEXT NOT NULL,
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        date VARCHAR(100) NOT NULL,
+        time VARCHAR(100) NOT NULL,
         purpose TEXT,
         notes TEXT,
         created_by INTEGER NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (created_by) REFERENCES USERS(id) ON DELETE RESTRICT
       )
     `);
@@ -89,13 +69,13 @@ const initializeDb = async () => {
     // ATTENDANCE Table
     await dbRun(`
       CREATE TABLE IF NOT EXISTS ATTENDANCE (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         meeting_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
-        status TEXT CHECK(status IN ('PRESENT', 'ABSENT', 'LATE', 'EXCUSED')) NOT NULL,
+        status VARCHAR(20) CHECK(status IN ('PRESENT', 'ABSENT', 'LATE', 'EXCUSED')) NOT NULL,
         marked_by INTEGER NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (meeting_id) REFERENCES MEETINGS(id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES USERS(id) ON DELETE CASCADE,
         FOREIGN KEY (marked_by) REFERENCES USERS(id) ON DELETE RESTRICT,
@@ -103,13 +83,13 @@ const initializeDb = async () => {
       )
     `);
 
-    console.log('Database tables verified/created successfully.');
+    console.log('Database tables verified/created successfully in PostgreSQL.');
 
     // Seed Admins
     await seedAdmins();
 
   } catch (error) {
-    console.error('Error initializing database:', error);
+    console.error('Error initializing PostgreSQL database:', error);
   }
 };
 
@@ -136,12 +116,12 @@ const seedAdmins = async () => {
   ];
 
   for (const admin of admins) {
-    const existing = await dbGet('SELECT * FROM USERS WHERE email = ? OR member_id = ?', [admin.email, admin.member_id]);
+    const existing = await dbGet('SELECT id FROM USERS WHERE email = $1 OR member_id = $2', [admin.email, admin.member_id]);
     if (!existing) {
       const passwordHash = bcrypt.hashSync(admin.password, 10);
       await dbRun(`
         INSERT INTO USERS (name, member_id, email, password_hash, role, status, class_year, committee_role)
-        VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?, ?)
+        VALUES ($1, $2, $3, $4, $5, 'ACTIVE', $6, $7)
       `, [admin.name, admin.member_id, admin.email, passwordHash, admin.role, admin.class_year, admin.committee_role]);
       console.log(`Seeded admin account: ${admin.email}`);
     }
@@ -149,7 +129,8 @@ const seedAdmins = async () => {
 };
 
 module.exports = {
-  db,
+  db: pool,
+  pool,
   dbRun,
   dbGet,
   dbAll,

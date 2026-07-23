@@ -13,9 +13,6 @@ const HEAD_ACCESS_CODE = process.env.HEAD_ACCESS_CODE;
 app.use(cors());
 app.use(express.json());
 
-// Initialize Database tables and seeds
-initializeDb();
-
 // ----------------------------------------------------
 // AUTHENTICATION MIDDLEWARES
 // ----------------------------------------------------
@@ -44,7 +41,7 @@ const requireAdmin = async (req, res, next) => {
     }
 
     // Verify role in the database to prevent token manipulation
-    const dbUser = await dbGet('SELECT role, status FROM USERS WHERE id = ?', [req.user.id]);
+    const dbUser = await dbGet('SELECT role, status FROM USERS WHERE id = $1', [req.user.id]);
     if (!dbUser || dbUser.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Forbidden: Valid Admin database role required' });
     }
@@ -82,12 +79,12 @@ app.post('/api/auth/register', async (req, res) => {
 
   try {
     // Check if email or member ID exists
-    const existingEmail = await dbGet('SELECT id FROM USERS WHERE email = ?', [email]);
+    const existingEmail = await dbGet('SELECT id FROM USERS WHERE email = $1', [email]);
     if (existingEmail) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
-    const existingMemberId = await dbGet('SELECT id FROM USERS WHERE member_id = ?', [member_id]);
+    const existingMemberId = await dbGet('SELECT id FROM USERS WHERE member_id = $1', [member_id]);
     if (existingMemberId) {
       return res.status(400).json({ error: 'Member ID already registered' });
     }
@@ -97,11 +94,14 @@ app.post('/api/auth/register', async (req, res) => {
 
     const result = await dbRun(`
       INSERT INTO USERS (name, member_id, email, password_hash, role, status, class_year, committee_role)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id
     `, [name, member_id, email, passwordHash, assignedRole, status, class_year, committee_role]);
 
+    const insertedId = result.id;
+
     const token = jwt.sign(
-      { id: result.id, name, member_id, email, role: assignedRole },
+      { id: insertedId, name, member_id, email, role: assignedRole },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -109,7 +109,7 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(201).json({
       message: 'Registration successful',
       token,
-      user: { id: result.id, name, member_id, email, role: assignedRole, class_year, committee_role }
+      user: { id: insertedId, name, member_id, email, role: assignedRole, class_year, committee_role }
     });
 
   } catch (error) {
@@ -128,7 +128,7 @@ app.post('/api/auth/login/member', async (req, res) => {
 
   try {
     const user = await dbGet(
-      'SELECT * FROM USERS WHERE (email = ? OR member_id = ?)',
+      'SELECT * FROM USERS WHERE (email = $1 OR member_id = $2)',
       [emailOrId, emailOrId]
     );
 
@@ -191,7 +191,7 @@ app.post('/api/auth/login/admin', async (req, res) => {
 
     // 2. Look up the admin user
     const user = await dbGet(
-      'SELECT * FROM USERS WHERE (email = ? OR member_id = ?)',
+      'SELECT * FROM USERS WHERE (email = $1 OR member_id = $2)',
       [emailOrId, emailOrId]
     );
 
@@ -248,7 +248,7 @@ app.post('/api/auth/login/admin', async (req, res) => {
 app.get('/api/users/me', authenticateToken, async (req, res) => {
   try {
     const user = await dbGet(
-      'SELECT id, name, member_id, email, role, status, class_year, committee_role FROM USERS WHERE id = ?',
+      'SELECT id, name, member_id, email, role, status, class_year, committee_role FROM USERS WHERE id = $1',
       [req.user.id]
     );
 
@@ -262,13 +262,13 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
         SELECT a.id, a.status, a.created_at, a.updated_at, m.id as meeting_id, m.title, m.date, m.time
         FROM ATTENDANCE a
         JOIN MEETINGS m ON a.meeting_id = m.id
-        WHERE a.user_id = ?
+        WHERE a.user_id = $1
         ORDER BY m.date DESC, m.time DESC
       `, [user.id]);
 
       // Calculate attendance statistics dynamically
-      let totalMeetings = await dbGet('SELECT COUNT(*) as count FROM MEETINGS');
-      totalMeetings = totalMeetings ? totalMeetings.count : 0;
+      const totalMeetingsRow = await dbGet('SELECT COUNT(*) as count FROM MEETINGS');
+      const totalMeetings = totalMeetingsRow ? parseInt(totalMeetingsRow.count, 10) : 0;
 
       let present = 0;
       let absent = 0;
@@ -318,17 +318,20 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
 // Get overall statistics summary for admin dashboard
 app.get('/api/admin/summary', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const totalMembers = await dbGet("SELECT COUNT(*) as count FROM USERS WHERE role = 'MEMBER'");
-    const totalMeetings = await dbGet("SELECT COUNT(*) as count FROM MEETINGS");
+    const totalMembersRow = await dbGet("SELECT COUNT(*) as count FROM USERS WHERE role = 'MEMBER'");
+    const totalMeetingsRow = await dbGet("SELECT COUNT(*) as count FROM MEETINGS");
+
+    const totalMembers = totalMembersRow ? parseInt(totalMembersRow.count, 10) : 0;
+    const totalMeetings = totalMeetingsRow ? parseInt(totalMeetingsRow.count, 10) : 0;
 
     // Latest meeting
     const latestMeeting = await dbGet("SELECT id, title, date FROM MEETINGS ORDER BY date DESC, time DESC LIMIT 1");
     let latestAttendance = { present: 0, absent: 0, late: 0, excused: 0 };
 
     if (latestMeeting) {
-      const records = await dbAll("SELECT status, COUNT(*) as count FROM ATTENDANCE WHERE meeting_id = ? GROUP BY status", [latestMeeting.id]);
+      const records = await dbAll("SELECT status, COUNT(*) as count FROM ATTENDANCE WHERE meeting_id = $1 GROUP BY status", [latestMeeting.id]);
       records.forEach(r => {
-        latestAttendance[r.status.toLowerCase()] = r.count;
+        latestAttendance[r.status.toLowerCase()] = parseInt(r.count, 10);
       });
     }
 
@@ -344,17 +347,22 @@ app.get('/api/admin/summary', authenticateToken, requireAdmin, async (req, res) 
     `);
 
     let averagePercentage = 'N/A';
-    if (overallStats && overallStats.total > 0) {
-      const presentAndLate = (overallStats.present || 0) + (overallStats.late || 0);
-      const eligible = overallStats.total - (overallStats.excused || 0);
+    if (overallStats && parseInt(overallStats.total, 10) > 0) {
+      const presentCount = parseInt(overallStats.present || 0, 10);
+      const lateCount = parseInt(overallStats.late || 0, 10);
+      const excusedCount = parseInt(overallStats.excused || 0, 10);
+      const totalCount = parseInt(overallStats.total || 0, 10);
+
+      const presentAndLate = presentCount + lateCount;
+      const eligible = totalCount - excusedCount;
       if (eligible > 0) {
         averagePercentage = ((presentAndLate / eligible) * 100).toFixed(1);
       }
     }
 
     res.json({
-      totalMembers: totalMembers ? totalMembers.count : 0,
-      totalMeetings: totalMeetings ? totalMeetings.count : 0,
+      totalMembers,
+      totalMeetings,
       latestMeeting: latestMeeting ? { id: latestMeeting.id, title: latestMeeting.title, date: latestMeeting.date, stats: latestAttendance } : null,
       averagePercentage
     });
@@ -373,7 +381,7 @@ app.get('/api/admin/members', authenticateToken, requireAdmin, async (req, res) 
     let params = [];
 
     if (q) {
-      query += " AND (name LIKE ? OR member_id LIKE ? OR email LIKE ? OR committee_role LIKE ?)";
+      query += " AND (name ILIKE $1 OR member_id ILIKE $2 OR email ILIKE $3 OR committee_role ILIKE $4)";
       const searchPattern = `%${q}%`;
       params = [searchPattern, searchPattern, searchPattern, searchPattern];
     }
@@ -399,20 +407,20 @@ app.put('/api/admin/members/:id', authenticateToken, requireAdmin, async (req, r
 
   try {
     // Validate uniqueness of email and member_id for other users
-    const existingEmail = await dbGet('SELECT id FROM USERS WHERE email = ? AND id != ?', [email, id]);
+    const existingEmail = await dbGet('SELECT id FROM USERS WHERE email = $1 AND id != $2', [email, id]);
     if (existingEmail) {
       return res.status(400).json({ error: 'Email is already taken by another user' });
     }
 
-    const existingMemberId = await dbGet('SELECT id FROM USERS WHERE member_id = ? AND id != ?', [member_id, id]);
+    const existingMemberId = await dbGet('SELECT id FROM USERS WHERE member_id = $1 AND id != $2', [member_id, id]);
     if (existingMemberId) {
       return res.status(400).json({ error: 'Member ID is already taken by another user' });
     }
 
     await dbRun(`
       UPDATE USERS
-      SET name = ?, member_id = ?, email = ?, class_year = ?, committee_role = ?
-      WHERE id = ? AND role = 'MEMBER'
+      SET name = $1, member_id = $2, email = $3, class_year = $4, committee_role = $5
+      WHERE id = $6 AND role = 'MEMBER'
     `, [name, member_id, email, class_year, committee_role, id]);
 
     res.json({ message: 'Member updated successfully' });
@@ -435,8 +443,8 @@ app.put('/api/admin/members/:id/status', authenticateToken, requireAdmin, async 
   try {
     await dbRun(`
       UPDATE USERS
-      SET status = ?
-      WHERE id = ? AND role = 'MEMBER'
+      SET status = $1
+      WHERE id = $2 AND role = 'MEMBER'
     `, [status, id]);
 
     res.json({ message: `Member status updated to ${status}` });
@@ -458,12 +466,15 @@ app.post('/api/admin/meetings', authenticateToken, requireAdmin, async (req, res
   try {
     const result = await dbRun(`
       INSERT INTO MEETINGS (title, date, time, purpose, notes, created_by)
-      VALUES (?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id
     `, [title, date, time, purpose, notes, req.user.id]);
+
+    const insertedId = result.id;
 
     res.status(201).json({
       message: 'Meeting created successfully',
-      meeting: { id: result.id, title, date, time, purpose, notes }
+      meeting: { id: insertedId, title, date, time, purpose, notes }
     });
 
   } catch (error) {
@@ -494,7 +505,7 @@ app.get('/api/admin/meetings/:id/attendance', authenticateToken, requireAdmin, a
   const { id } = req.params;
   try {
     // Verify meeting exists first
-    const meeting = await dbGet('SELECT * FROM MEETINGS WHERE id = ?', [id]);
+    const meeting = await dbGet('SELECT * FROM MEETINGS WHERE id = $1', [id]);
     if (!meeting) {
       return res.status(404).json({ error: 'Meeting not found' });
     }
@@ -509,7 +520,7 @@ app.get('/api/admin/meetings/:id/attendance', authenticateToken, requireAdmin, a
         u.class_year, 
         a.status
       FROM USERS u
-      LEFT JOIN ATTENDANCE a ON u.id = a.user_id AND a.meeting_id = ?
+      LEFT JOIN ATTENDANCE a ON u.id = a.user_id AND a.meeting_id = $1
       WHERE u.role = 'MEMBER' AND u.status = 'ACTIVE'
       ORDER BY u.name ASC
     `, [id]);
@@ -535,13 +546,11 @@ app.post('/api/admin/meetings/:id/attendance', authenticateToken, requireAdmin, 
   }
 
   try {
-    const meeting = await dbGet('SELECT * FROM MEETINGS WHERE id = ?', [id]);
+    const meeting = await dbGet('SELECT * FROM MEETINGS WHERE id = $1', [id]);
     if (!meeting) {
       return res.status(404).json({ error: 'Meeting not found' });
     }
 
-    // Perform database transactions or run queries sequentially.
-    // SQLite runs synchronously using the db module, but we can do a sequence of promises.
     for (const record of records) {
       const { user_id, status } = record;
 
@@ -553,10 +562,10 @@ app.post('/api/admin/meetings/:id/attendance', authenticateToken, requireAdmin, 
         return res.status(400).json({ error: `Invalid status code: ${status} for user ID ${user_id}` });
       }
 
-      // Upsert: INSERT OR REPLACE or ON CONFLICT
+      // Upsert into ATTENDANCE in PostgreSQL
       await dbRun(`
         INSERT INTO ATTENDANCE (meeting_id, user_id, status, marked_by, updated_at)
-        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
         ON CONFLICT(meeting_id, user_id) 
         DO UPDATE SET 
           status = EXCLUDED.status,
@@ -574,6 +583,17 @@ app.post('/api/admin/meetings/:id/attendance', authenticateToken, requireAdmin, 
 });
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await initializeDb();
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
